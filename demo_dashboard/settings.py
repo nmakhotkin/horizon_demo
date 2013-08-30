@@ -31,7 +31,7 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 ROOT_URLCONF = 'openstack_dashboard.urls'
 
 HORIZON_CONFIG = {
-    'dashboards': ('project', 'admin', 'visualizations', 'settings',),
+    'dashboards': ('project', 'admin', 'visualizations', 'temper', 'settings',),
     'default_dashboard': 'project',
     'user_home': 'openstack_dashboard.views.get_user_home',
     'ajax_queue_limit': 10,
@@ -105,7 +105,8 @@ INSTALLED_APPS = (
     'openstack_dashboard.dashboards.admin',
     'openstack_dashboard.dashboards.settings',
     'openstack_auth',
-    'demo_dashboard.dashboards.visualizations'
+    'demo_dashboard.dashboards.visualizations',
+    'demo_dashboard.dashboards.temper'
 )
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
