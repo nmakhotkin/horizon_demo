@@ -14,7 +14,7 @@ from .test_data import json as test_json
 def correlate_tenants(request, instances):
     # Gather our tenants to correlate against IDs
     try:
-        tenants = api.keystone.tenant_list(request, admin=True)
+        tenants, has_more_data = api.keystone.tenant_list(request)
     except:
         tenants = []
         msg = _('Unable to retrieve instance tenant information.')
@@ -78,7 +78,7 @@ def get_fake_instances_data(request):
 
 
 def get_instances_data(request):
-    instances = api.nova.server_list(request, all_tenants=True)
+    instances, has_more_data = api.nova.server_list(request, all_tenants=True)
 
     # Get the useful data... thanks Nova :-P
     if instances:

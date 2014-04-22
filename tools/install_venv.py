@@ -1,10 +1,11 @@
-# Copyright 2012, Nebula Inc. All Rights Reserved.
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2011 United States Government as represented by the
+# Copyright 2010 United States Government as represented by the
 # Administrator of the National Aeronautics and Space Administration.
 # All Rights Reserved.
 #
-# Copyright 2011 OpenStack, LLC
+# Copyright 2010 OpenStack Foundation
+# Copyright 2013 IBM Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -18,122 +19,55 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""
-Installation script for the Demo OpenStack Dashboard development virtualenv.
-"""
-
-import os
-import subprocess
 import sys
+import install_venv_common as install_venv  # noqa
+import os
 
 
-ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-VENV = os.path.join(ROOT, '.venv')
-WITH_VENV = os.path.join(ROOT, 'tools', 'with_venv.sh')
-PIP_REQUIRES = os.path.join(ROOT, 'tools', 'pip-requires')
-TEST_REQUIRES = os.path.join(ROOT, 'tools', 'test-requires')
 
+def print_help(venv, root):
+    help = """
+    Openstack development environment setup is complete.
 
-def die(message, *args):
-    print >> sys.stderr, message % args
-    sys.exit(1)
+    Openstack development uses virtualenv to track and manage Python
+    dependencies while in development and testing.
 
+    To activate the Openstack virtualenv for the extent of your current shell
+    session you can run:
 
-def run_command(cmd, redirect_output=True, check_exit_code=True, cwd=ROOT,
-                die_message=None):
+    $ source %s/bin/activate
+
+    Or, if you prefer, you can run commands in the virtualenv on a case by case
+    basis by running:
+
+    $ %s/tools/with_venv.sh <your command>
+
+    Also, make test will automatically use the virtualenv.
     """
-    Runs a command in an out-of-process shell, returning the
-    output of that command.  Working directory is ROOT.
-    """
-    if redirect_output:
-        stdout = subprocess.PIPE
-    else:
-        stdout = None
-
-    proc = subprocess.Popen(cmd, cwd=cwd, stdout=stdout)
-    output = proc.communicate()[0]
-    if check_exit_code and proc.returncode != 0:
-        if die_message is None:
-            die('Command "%s" failed.\n%s', ' '.join(cmd), output)
-        else:
-            die(die_message)
-    return output
+    print(help % (venv, root))
 
 
-HAS_EASY_INSTALL = bool(run_command(['which', 'easy_install'],
-                                    check_exit_code=False).strip())
-HAS_VIRTUALENV = bool(run_command(['which', 'virtualenv'],
-                                  check_exit_code=False).strip())
+def main(argv):
+    root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
+    if os.environ.get('tools_path'):
+        root = os.environ['tools_path']
+    venv = os.path.join(root, '.venv')
+    if os.environ.get('venv'):
+        venv = os.environ['venv']
 
-def check_dependencies():
-    """Make sure virtualenv is in the path."""
-
-    print 'checking dependencies...'
-    if not HAS_VIRTUALENV:
-        print 'not found.'
-        # Try installing it via easy_install...
-        if HAS_EASY_INSTALL:
-            print 'Installing virtualenv via easy_install...',
-            run_command(['easy_install', 'virtualenv'],
-                        die_message='easy_install failed to install virtualenv'
-                                    '\ndevelopment requires virtualenv, please'
-                                    ' install it using your favorite tool')
-            if not run_command(['which', 'virtualenv']):
-                die('ERROR: virtualenv not found in path.\n\ndevelopment '
-                    ' requires virtualenv, please install it using your'
-                    ' favorite package management tool and ensure'
-                    ' virtualenv is in your path')
-            print 'virtualenv installation done.'
-        else:
-            die('easy_install not found.\n\nInstall easy_install'
-                ' (python-setuptools in ubuntu) or virtualenv by hand,'
-                ' then rerun.')
-    print 'dependency check done.'
-
-
-def create_virtualenv(venv=VENV):
-    """Creates the virtual environment and installs PIP only into the
-    virtual environment
-    """
-    print 'Creating venv...',
-    run_command(['virtualenv', '-q', '--no-site-packages', VENV])
-    print 'done.'
-    print 'Installing pip in virtualenv...',
-    if not run_command([WITH_VENV, 'easy_install', 'pip']).strip():
-        die("Failed to install pip.")
-    print 'done.'
-
-
-def pip_install(*args):
-    args = [WITH_VENV, 'pip', 'install', '--upgrade'] + list(args)
-    run_command(args, redirect_output=False)
-
-
-def install_dependencies(venv=VENV):
-    print "Installing dependencies..."
-    print "(This may take several minutes, don't panic)"
-    pip_install('-r', PIP_REQUIRES)
-    pip_install('-r', TEST_REQUIRES)
-
-
-def print_summary():
-    summary = """
- OpenStack Dashboard development environment setup is complete.
-
- To activate the virtualenv for the extent of your current shell session you
- can run:
-
- $ source .venv/bin/activate
-  """
-    print summary
-
-
-def main():
-    check_dependencies()
-    create_virtualenv()
-    install_dependencies()
-    print_summary()
+    pip_requires = os.path.join(root, 'requirements.txt')
+    test_requires = os.path.join(root, 'test-requirements.txt')
+    py_version = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
+    project = 'Openstack'
+    install = install_venv.InstallVenv(root, venv, pip_requires, test_requires,
+                                       py_version, project)
+    options = install.parse_args(argv)
+    install.check_python_version()
+    install.check_dependencies()
+    install.create_virtualenv(no_site_packages=options.no_site_packages)
+    install.install_dependencies()
+    print_help(venv, root)
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
