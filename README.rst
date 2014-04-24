@@ -15,9 +15,8 @@ Setup Instructions
 
 The following should get you started::
 
-    $ git clone https://github.com/gabrielhurley/horizon_demo.git
+    $ git clone https://github.com/enykeev/horizon_demo.git -b mistral
     $ cd horizon_demo
-    $ python tools/install_venv.py
     $ cp demo_dashboard/local/local_settings.py.example demo_dashboard/local/local_settings.py
 
 Edit the ``local_settings.py`` file as needed.
